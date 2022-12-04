@@ -139,7 +139,7 @@ def resetTOKEN(request):
         }) 
 
 
-    _TOKEN = token_hex(64)[:64] # len(token_hex(64)) => 128 ?
+    _TOKEN = token_hex(128)[:128] # len(token_hex(64)) => 128 ?
     User.objects.filter(UserID = UserId).update(TOKEN = _TOKEN,
     TOKENDATE = datetime.now()
     )
