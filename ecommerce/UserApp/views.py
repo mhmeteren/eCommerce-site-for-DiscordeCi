@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods
 
 from hashlib import sha256
@@ -151,5 +150,3 @@ def resetTOKEN(request):
     }
     return render(request, 'Home.html', context=content)
 
-def product(request):
-    return render(request, 'product-details.html')
