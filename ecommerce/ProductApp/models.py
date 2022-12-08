@@ -73,6 +73,7 @@ class UrunColor(models.TextChoices):
     YESIL = 'YESIL', 'yeşil'
     SARI = 'SARI', 'sarı'
     TURUNCU = 'TURUNCU', 'turuncu'
+    SIYAH = 'SIYAH', 'siyah'
 
 
 
@@ -117,3 +118,16 @@ class UrunImg(models.Model):
     
     def get_absolute_url(self):
         return '/p/product-detail/%i/' % self.UrunID.UrunID
+
+class UrunOzellik(models.Model):
+    UrunOzID = models.AutoField(primary_key=True)
+    UrunID = models.ForeignKey(Urun, on_delete=models.CASCADE, name="UrunID")
+    UrunOzType = models.CharField(max_length=50)
+    UrunOzValue = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = "UrunOzellik"
+        verbose_name= "UrunOzellik"
+    
+    def __str__(self):
+        return f'UrunID: {self.UrunID.UrunID} - Type: {self.UrunOzType} - Value: {self.UrunOzValue}'
