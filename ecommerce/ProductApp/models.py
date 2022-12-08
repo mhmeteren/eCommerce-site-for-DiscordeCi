@@ -102,6 +102,8 @@ class Urun(models.Model):
     def __str__(self):
         return self.UrunADI
 
+    def get_absolute_url(self):
+        return '/p/product-detail/%i/' % self.UrunID
 
 class UrunImg(models.Model):
 
