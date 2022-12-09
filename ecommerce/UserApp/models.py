@@ -11,7 +11,7 @@ class User(models.Model):
     UserGSM = models.CharField(max_length=11)
     UserEMAIL = models.CharField(max_length=100)
     UserPASSWORD = models.CharField(max_length=128)
-    TOKEN = models.CharField(max_length=128, null=True, editable=False)
+    TOKEN = models.CharField(max_length=128, null=True)
     TOKENDATE = models.DateTimeField(null=True)
 
     class Meta:
