@@ -10,7 +10,7 @@ import locale
 def productDetail(request, urunid):
     try:
         urun = Urun.objects.get(UrunID = urunid)
-        urunImg = UrunImg.objects.get(UrunID = Urun(UrunID = urunid))
+        urunImg = UrunImg.objects.get(Urun = Urun(UrunID = urunid))
     except Urun.DoesNotExist:
         urun = None
         urunImg = None
@@ -23,13 +23,13 @@ def productDetail(request, urunid):
 
     urun.UrunFIYAT = ConvertFiyat(urun.UrunFIYAT)
 
-    related_products = Urun.objects.filter(~Q(UrunID = urun.UrunID), MarkaID = urun.MarkaID)[:4]
+    related_products = Urun.objects.filter(~Q(UrunID = urun.UrunID), Marka = urun.Marka)[:4]
     related_products_img =list()
 
-    urunoz = UrunOzellik.objects.filter(UrunID = urun)
+    urunoz = UrunOzellik.objects.filter(Urun = urun)
     
     for product in related_products:
-        related_products_img.append(UrunImg.objects.get(UrunID = product).UrunImgUrl)
+        related_products_img.append(UrunImg.objects.get(Urun = product).UrunImgUrl)
         product.UrunFIYAT = ConvertFiyat(product.UrunFIYAT)
     
 

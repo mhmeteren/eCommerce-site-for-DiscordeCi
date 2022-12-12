@@ -21,4 +21,5 @@ urlpatterns = [
     path('u/', include('UserApp.urls')),
     path('p/', include('ProductApp.urls')),
     path('Userapi/', include('UserApp.api.urls')),
+    path('Papi/', include('ProductApp.api.urls')),
 ]

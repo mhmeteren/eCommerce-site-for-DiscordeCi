@@ -48,12 +48,12 @@ class Kategori(models.Model):
         verbose_name= "Kategori"
 
     def __str__(self):
-        return f'ID: {self.KategoriID}, ADI: {self.KategoriADI}'
+        return self.KategoriADI
 
 class AltKategori(models.Model):
     
     AltKategoriID = models.AutoField(primary_key=True)
-    KategoriID = models.ForeignKey(Kategori, on_delete=models.CASCADE, name="KategoriID")
+    Kategori = models.ForeignKey(Kategori, on_delete=models.CASCADE, name="Kategori")
     AltKategoriADI = models.CharField(max_length=50)
     AltKategoriTARIH = models.DateTimeField(auto_now_add=True)
     AltKategoriDURUM = models.BooleanField(default=False)
@@ -63,7 +63,7 @@ class AltKategori(models.Model):
         verbose_name= "AltKategori"
 
     def __str__(self):
-        return f'ID: {self.AltKategoriID}, ADI: {self.AltKategoriADI}, KADI: {self.KategoriID.KategoriADI}'
+        return self.AltKategoriADI
 
 
 
@@ -81,10 +81,10 @@ class UrunColor(models.TextChoices):
 class Urun(models.Model):
 
     UrunID = models.AutoField(primary_key=True)
-    FirmaID = models.ForeignKey(Firma, on_delete=models.CASCADE, name="FirmaID")
-    KategoriID = models.ForeignKey(Kategori, on_delete=models.CASCADE, name="KategoriID")
-    AltKategoriID = models.ForeignKey(AltKategori, on_delete=models.CASCADE, name="AltKategoriID")
-    MarkaID = models.ForeignKey(Marka, on_delete=models.CASCADE, name="MarkaID")
+    Firma = models.ForeignKey(Firma, on_delete=models.CASCADE, name="Firma")
+    Kategori = models.ForeignKey(Kategori, on_delete=models.CASCADE, name="Kategori")
+    AltKategori = models.ForeignKey(AltKategori, on_delete=models.CASCADE, name="AltKategori")
+    Marka = models.ForeignKey(Marka, on_delete=models.CASCADE, name="Marka")
 
     UrunKODU = models.CharField(max_length=50)
     UrunADI = models.CharField(max_length=100)
@@ -108,7 +108,7 @@ class Urun(models.Model):
 class UrunImg(models.Model):
 
     UrunImgID = models.AutoField(primary_key=True)
-    UrunID = models.ForeignKey(Urun, on_delete=models.CASCADE, name="UrunID")
+    Urun = models.ForeignKey(Urun, on_delete=models.CASCADE, name="Urun", related_name="resimler")
     UrunImgUrl = models.CharField(max_length=200)
 
     class Meta:
@@ -116,14 +116,14 @@ class UrunImg(models.Model):
         verbose_name= "UrunImg"
 
     def __str__(self):
-        return f'UrunID: {self.UrunID.UrunID}'
+        return f'UrunID: {self.Urun.UrunID}'
     
     def get_absolute_url(self):
-        return '/p/product-detail/%i/' % self.UrunID.UrunID
+        return '/p/product-detail/%i/' % self.Urun.UrunID
 
 class UrunOzellik(models.Model):
     UrunOzID = models.AutoField(primary_key=True)
-    UrunID = models.ForeignKey(Urun, on_delete=models.CASCADE, name="UrunID")
+    Urun = models.ForeignKey(Urun, on_delete=models.CASCADE, name="Urun", related_name="ozellikler")
     UrunOzType = models.CharField(max_length=50)
     UrunOzValue = models.CharField(max_length=50)
 
@@ -132,4 +132,4 @@ class UrunOzellik(models.Model):
         verbose_name= "UrunOzellik"
     
     def __str__(self):
-        return f'UrunID: {self.UrunID.UrunID} - Type: {self.UrunOzType} - Value: {self.UrunOzValue}'
+        return f'UrunID: {self.Urun.UrunID} - Type: {self.UrunOzType} - Value: {self.UrunOzValue}'
