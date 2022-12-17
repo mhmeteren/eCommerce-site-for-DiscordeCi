@@ -94,34 +94,36 @@ class ProductsFilterListAPIView(APIView):
         assert self.paginator is not None
         return self.paginator.get_paginated_response(data)
 
-
+    """
+    When I wrote this code, only god and I knew how it worked.
+    Now only god know
+    """
     def FilterProduct(self, **kwargs):
         OzList = kwargs.get('ozellikler')
         products = []
         for ozDict in OzList:
-            if products == []:
-                try:
+            try:
+                if products == []:
                     products_temp = UrunOzellik.objects.filter(**ozDict)
-                except:
-                    return []
+                    if not products_temp:
+                        break
+                    products = products_temp
 
-                if not products_temp:
-                    break
-                products = products_temp
-
-            else:
-                temp = []
-                for pr in products:
-                    try:
+                else:
+                    temp = []
+                    for pr in products:
                         urunoz = UrunOzellik.objects.filter(Urun= pr.Urun, **ozDict).first()
-                    except:
-                        return []
-                    if urunoz:
-                        temp.append(urunoz) 
+                        if urunoz:
+                            temp.append(urunoz) 
 
-                if temp:
-                    products = temp        
-        
+                    if temp:
+                        products = temp
+                    # else:
+                    #     return []
+                    # Girilen özeliklere tam uyan ürün yoksa [] döndür. Ya da bu kodu kapat sırayla uyan ozeliklere sahip urunleri getirir.        
+            except:
+                return []
+
         return [pr.Urun for pr in products]
 
 

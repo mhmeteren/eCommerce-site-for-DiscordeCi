@@ -88,9 +88,9 @@
                 <div class="col-lg-12">
                     <div class="breadcrumb__links">
                         <a><i class="fa fa-home"></i> Home</a>
-                        <a href="#">{{product.KategoriID.KategoriADI}} </a>
-                        <a href="#">{{product.AltKategoriID.AltKategoriADI}} </a>
-                        <span>{{product.MarkaID.MarkaADI}}</span>
+                        <a href="#">{{product.Kategori.KategoriADI}} </a>
+                        <a href="#">{{product.AltKategori.AltKategoriADI}} </a>
+                        <span>{{product.Marka.MarkaADI}}</span>
                     </div>
                 </div>
             </div>
@@ -131,10 +131,11 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="product__details__text">
-                            <h3>{{product.UrunADI}}<span>{{product.MarkaID.MarkaADI}}</span></h3>
-                            <h4><span>{{product.FirmaID.FirmaADI}}</span></h4>
+                            <h3>{{product.UrunADI}}<span>{{product.Marka.MarkaADI}}</span></h3>
+                            <h4><span>{{product.Firma.FirmaADI}}</span></h4>
                         <div class="rating">
                             <i class="fa fa-heart"></i>
+                            
                             <span>( +110 favoriye ekleme )</span>
                         </div>
                         <div class="product__details__price">{{product.UrunFIYAT}}  TL</div>
@@ -153,14 +154,16 @@
                             </ul>
                         </div>
                         <div class="product__details__widget">
-                            {%if product.KategoriID.KategoriID != 2 and product.KategoriID.KategoriID != 3 %}
+                            
                             <ul>
                                 
                                 <li>
-                                    <span>Available color:</span>
+                                    <span>Color:</span>
                                     <p>{{product.UrunRENK}}</p>
+                                    <span>No:</span>
+                                    <p>{{product.UrunKODU}}</p>
                                 </li>
-                                <li>
+                                <!-- <li>
                                     <span>Available size:</span>
                                     <div class="size__btn">
                                         <label for="xs-btn" class="active">
@@ -180,12 +183,12 @@
                                             l
                                         </label>
                                     </div>
-                                </li>
+                                </li> -->
                                 <li>
                                     
                                 </li>
                             </ul>
-                            {%endif%}
+                          
                         </div>
                     </div>
                 </div>
@@ -214,7 +217,7 @@
                                       <div class="flex-container">
                                         <div class="info-wrapper">
                                           <div class="detail-name-container">
-                                            <h3 class="detail-name">{{product.MarkaID.MarkaADI}}
+                                            <h3 class="detail-name">{{product.Marka.MarkaADI}}
                                               <!-- -->
                                               <!-- -->{{product.UrunADI}}
                                             </h3>
