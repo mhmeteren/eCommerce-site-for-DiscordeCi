@@ -11,8 +11,8 @@ class User(models.Model):
     UserGSM = models.CharField(max_length=11)
     UserEMAIL = models.CharField(max_length=100)
     UserPASSWORD = models.CharField(max_length=128)
-    TOKEN = models.CharField(max_length=128, null=True)
-    TOKENDATE = models.DateTimeField(null=True)
+    TOKEN = models.CharField(max_length=128, null=True, editable=False)
+    TOKENDATE = models.DateTimeField(null=True, editable=False)
 
     class Meta:
         db_table = "User"
@@ -28,7 +28,13 @@ class User(models.Model):
     def save(self):
         self.UserPASSWORD = sha256(self.UserPASSWORD.encode('utf-8')).hexdigest()
         super(User, self).save()
-    
+
+        try:
+            user = User.objects.get(UserEMAIL=self.UserEMAIL)
+            uyeList = UyeList(User = user, UyeListADI="Favoriler")
+            uyeList.save()
+        except:
+            pass
     
     # """ilgili ürünü web sayfasında görme"""
     # def get_absolute_url(self):
@@ -50,8 +56,8 @@ class SiparisStatus(models.TextChoices):
 class Siparis(models.Model):
 
     SiparisID = models.AutoField(primary_key=True)
-    UserID = models.ForeignKey(User, on_delete=models.CASCADE, name="UserID")
-    UrunID = models.ForeignKey(Urun, on_delete=models.PROTECT, name="UrunID")
+    User = models.ForeignKey(User, on_delete=models.CASCADE, name="User")
+    Urun = models.ForeignKey(Urun, on_delete=models.PROTECT, name="Urun")
 
     SiparisADRES = models.CharField(max_length=300)
     SiparisADET = models.IntegerField()
@@ -64,14 +70,14 @@ class Siparis(models.Model):
         verbose_name= "Siparis"
 
     def __str__(self):
-        return f'User: {self.UserID.UserName} {self.UserID.UserSurename}, Urun ID: {self.UrunID.UrunID}'
+        return f'User: {self.User.UserName} {self.User.UserSurename}, Urun ID: {self.Urun.UrunID}'
 
 
 
 class UyeList(models.Model):
 
     UyeListID = models.AutoField(primary_key=True)
-    UserID = models.ForeignKey(User, on_delete=models.CASCADE, name="UserID")
+    User = models.ForeignKey(User, on_delete=models.CASCADE, name="User")
 
     UyeListADI = models.CharField(max_length=50)
     UyeListTARIH = models.DateTimeField(auto_now_add=True)
@@ -81,24 +87,24 @@ class UyeList(models.Model):
         verbose_name= "UyeList"
 
     def __str__(self):
-        return self.UyeListADI
+        return f"List Adı: {self.UyeListADI}, User: {self.User}"
     
 
 class UrunList(models.Model):
 
     UrunListID = models.AutoField(primary_key=True)
-    UyeListID = models.ForeignKey(UyeList, on_delete=models.CASCADE, name="UyeListID")
-    UrunID = models.ForeignKey(Urun, on_delete=models.CASCADE, name="UrunID")
+    UyeList = models.ForeignKey(UyeList, on_delete=models.CASCADE, name="UyeList", related_name="UrunList")
+    Urun = models.ForeignKey(Urun, on_delete=models.CASCADE, name="Urun", related_name="Urun")
 
     class Meta:
         db_table = "UrunList"
         verbose_name= "UrunList"
 
     def __str__(self):
-        return f'URUN ID: {self.UrunID.UrunID}, LISTE ADI: {self.UyeListID.UyeListADI}'
+        return f'URUN ID: {self.Urun.UrunID}, LISTE ADI: {self.UyeList.UyeListADI}'
     
     def get_absolute_url(self):
-        return '/p/product-detail/%i/' % self.UrunID.UrunID
+        return '/p/product-detail/%i/' % self.Urun.UrunID
     
 
 
@@ -106,8 +112,8 @@ class UrunList(models.Model):
 class UrunYorum(models.Model):
     
     UrunYorumID = models.AutoField(primary_key=True)
-    UrunID = models.ForeignKey(Urun, on_delete=models.CASCADE, name="UrunID")
-    UserID = models.ForeignKey(User, on_delete=models.CASCADE, name="UserID")
+    Urun = models.ForeignKey(Urun, on_delete=models.CASCADE, name="Urun")
+    User = models.ForeignKey(User, on_delete=models.CASCADE, name="User")
 
     Yorum = models.CharField(max_length=200)
     YorumTARIH = models.DateTimeField(auto_now_add=True)
@@ -118,14 +124,14 @@ class UrunYorum(models.Model):
         verbose_name= "UrunYorum"
 
     def __str__(self):
-        return f'UrunID: {self.UrunID.UrunID}'
+        return f'Urun: {self.Urun.UrunID}'
 
 
 class Sepet(models.Model):
     
     SepetID = models.AutoField(primary_key=True)
-    UrunID = models.ForeignKey(Urun, on_delete=models.CASCADE, name="UrunID")
-    UserID = models.ForeignKey(User, on_delete=models.CASCADE, name="UserID")
+    Urun = models.ForeignKey(Urun, on_delete=models.CASCADE, name="Urun")
+    User = models.ForeignKey(User, on_delete=models.CASCADE, name="User")
     
     UrunADET = models.IntegerField()
     UrunTARIH = models.DateTimeField(auto_now_add=True)
@@ -135,6 +141,6 @@ class Sepet(models.Model):
         verbose_name= "Sepet"
 
     def __str__(self):
-        return f'UrunID: {self.UrunID.UrunID}'
+        return f'Urun: {self.Urun.UrunID}'
 
 
