@@ -26,7 +26,14 @@ class UyeListSerializers(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
 class UrunCreatSerializers(serializers.ModelSerializer):
     class Meta:
         model = UrunList
+        fields = '__all__'
+
+
+class UserProductListSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = UyeList
         fields = '__all__'

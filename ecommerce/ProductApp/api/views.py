@@ -9,6 +9,8 @@ from ProductApp.models import Urun, UrunOzellik
 from ProductApp.api.serializers import UrunSerializers
 from ProductApp.api.pagination import LargePagination
 
+from ..APIscripts.user_scripts import User_TOKEN_Control
+
 class ProductsListAPIView(APIView):
     
     def get_products(self, id):
@@ -16,6 +18,9 @@ class ProductsListAPIView(APIView):
         return products
 
     def get(self, request, id):
+        """
+        ürün id ye göre ürün bilgilerini dön.
+        """
         product = self.get_products(id)
         serializers = UrunSerializers(product)
         return Response(serializers.data, status=status.HTTP_200_OK)
@@ -37,11 +42,13 @@ class ProductsSearchListAPIView(APIView):
                 self._paginator = self.pagination_class()
         return self._paginator
 
+
     def paginate_queryset(self, queryset):
         """Return a single page of results, or `None` if pagination is disabled."""
         if self.paginator is None:
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
 
     def get_paginated_response(self, data):
         """Return a paginated style `Response` object for the given output data."""
@@ -49,29 +56,38 @@ class ProductsSearchListAPIView(APIView):
         return self.paginator.get_paginated_response(data)
 
 
-
-
     def ListProduct(self, **kwargs):
         try:
-            products = Urun.objects.filter( **kwargs)
+            products = Urun.objects.filter( **kwargs).order_by('UrunADI')
         except:
             return []
         return products
 
+
     def get(self, request):
-        products = self.ListProduct(**request.data)
-        page = self.paginate_queryset(products)
-        if page is not None:
-            serializer = self.serializer_class(page, many=True)
-            return self.get_paginated_response(serializer.data) 
-            
-        serializer = self.serializer_class(products, many=True)
-        return Response(serializer.data)
+        """
+        UrunADI__icontains, UrunFIYAT__range ve UrunKODU göre ürün arama yapılan yer.
+        "UrunSTOK__gt": 0, "UrunDURUM": true => Otomatik eklenenler.
+        """
+        UserAccessToken = request.query_params.get('UserAccessToken')
+        Token_Status = User_TOKEN_Control(token=UserAccessToken)
+        if Token_Status:
+            products = self.ListProduct(**request.data)
+            page = self.paginate_queryset(products)
+            if page is not None:
+                serializer = self.serializer_class(page, many=True)
+                return self.get_paginated_response(serializer.data) 
+
+            serializer = self.serializer_class(products, many=True)
+            return Response(serializer.data)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class ProductsFilterListAPIView(APIView):
     serializer_class = UrunSerializers
     pagination_class = LargePagination
+
 
     @property
     def paginator(self):
@@ -83,16 +99,19 @@ class ProductsFilterListAPIView(APIView):
                 self._paginator = self.pagination_class()
         return self._paginator
 
+
     def paginate_queryset(self, queryset):
         """Return a single page of results, or `None` if pagination is disabled."""
         if self.paginator is None:
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
+
     def get_paginated_response(self, data):
         """Return a paginated style `Response` object for the given output data."""
         assert self.paginator is not None
         return self.paginator.get_paginated_response(data)
+
 
     """
     When I wrote this code, only god and I knew how it worked.
@@ -119,8 +138,11 @@ class ProductsFilterListAPIView(APIView):
                     if temp:
                         products = temp
                     # else:
+                    #     """
+                    #     Girilen özeliklere tam uyan ürün yoksa [] döndür. Ya da bu kodu kapat sırayla uyan ozeliklere sahip urunleri getirir.
+                    #     """
                     #     return []
-                    # Girilen özeliklere tam uyan ürün yoksa [] döndür. Ya da bu kodu kapat sırayla uyan ozeliklere sahip urunleri getirir.        
+                            
             except:
                 return []
 
@@ -128,11 +150,26 @@ class ProductsFilterListAPIView(APIView):
 
 
     def get(self, request):
-        products = self.FilterProduct(**request.data)
-        page = self.paginate_queryset(products)
-        if page is not None:
-            serializer = self.serializer_class(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        """
+        "ozellikler": [
+                {
+                    "UrunOzType": "İşlemci Tipi",
+                    "UrunOzValue": "AMD Ryzen 7"
+                },
+                .
+                .
+            ]
+        Şekilde ürün özelliklerine göre filtreleme yapılan yer.
+        """
+        UserAccessToken = request.query_params.get('UserAccessToken')
+        Token_Status = User_TOKEN_Control(token=UserAccessToken)
+        if Token_Status:
+            products = self.FilterProduct(**request.data)
+            page = self.paginate_queryset(products)
+            if page is not None:
+                serializer = self.serializer_class(page, many=True)
+                return self.get_paginated_response(serializer.data)
 
-        serializer = self.serializer_class(products, many=True)
-        return Response(serializer.data)
+            serializer = self.serializer_class(products, many=True)
+            return Response(serializer.data)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
