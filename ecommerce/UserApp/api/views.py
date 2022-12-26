@@ -51,10 +51,6 @@ class UserUyeListAPIView(APIView):
 
 
     def get_product(self, uyeList: UyeList, urunid: int):
-        """
-        Eğer url e ?p parametresi ile GET isteği yapılırsa
-        sadece ilgili ürünün bilgilerini dön.
-        """
         product = get_object_or_404(UrunList, UyeList=uyeList, Urun=Urun(UrunID = urunid))
         return product
 
@@ -71,8 +67,16 @@ class UserUyeListAPIView(APIView):
 
 
     def get(self, request, listname: str):
+        """
+        Eğer url de ?p parametresi ile GET isteği yapılırsa
+        sadece ilgili ürünün bilgilerini response da gönder.(p param is product Id) 
+        Ya da tüm listedeki ürünlerin bilgilerini response da gönder.
+        """
         p = request.query_params.get('p')
-        token = request.data["Token"]
+        try:
+            token = request.data["Token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         _uyeList = self.get_UyeList_objects(TOKEN=token, ListName=listname)
         if p is None:
             serializer = UyeListSerializers(_uyeList)
@@ -89,8 +93,11 @@ class UserUyeListAPIView(APIView):
         listname: str
         """
         p = request.query_params.get('p')
-        token = request.data["Token"]
-        del request.data["Token"]
+        try:
+            token = request.data["Token"]
+            del request.data["Token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         _uyeList = self.get_UyeList_objects(TOKEN=token, ListName=listname)
         if p is None and not self.productControl(UyeList=_uyeList, UrunId=request.data["Urun"]):
             request.data["UyeList"] = _uyeList.UyeListID
@@ -108,8 +115,12 @@ class UserUyeListAPIView(APIView):
         ilgili listesinden ürün silinir.
         """
         p = request.query_params.get('p')
-        token = request.data["Token"]
-        del request.data["Token"]
+        try:
+            token = request.data["Token"]
+            del request.data["Token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
         _uyeList = self.get_UyeList_objects(TOKEN=token, ListName=listname)
         if p:
             product = self.get_product(uyeList=_uyeList, urunid=p)
@@ -140,7 +151,109 @@ class UserProductListView(APIView):
 
 
     def get(self, request):
-        token = request.data["Token"]
+        try:
+            token = request.data["Token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         Uyelist = self.get_UyeList_objects(TOKEN=token)
         serializer = UserProductListSerializers(Uyelist, many = True)
         return Response(serializer.data)
+
+
+
+class UserSepetListAddDeleteAPIView(APIView):
+    """
+    İlgili kulanıcının Access token ı ile sepetindeki ürünler üzerinde listemleme/Ekleme/Silme gibi
+    işlemlerin yapıldığı APIView class
+    """
+
+    def get_User(self, UserAccessToken: str):
+        user = get_object_or_404(User, TOKEN = UserAccessToken)
+        return user
+
+
+    def get_Cart(self, User: User):
+        """
+        İlgili kullanıcının sepetindeki tüm ürünleri filtreleyen fonksiyon
+        """
+        tepes = Sepet.objects.filter(User=User)
+        return tepes
+
+
+    def get_product_Sepet(self, id: int, user: User):
+        """
+        Sepet id de ürün var mı ?(y/N) Bu ürün bu access token a sahip kullanıcının sepetinde mi?(y/N)
+        y - y return product
+        other return 404
+        """
+        pr = get_object_or_404(Sepet, SepetID = id, User = user)
+        return pr
+
+
+    def get(self, request):
+        try:
+            token = request.data["Token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        user = self.get_User(UserAccessToken=token)
+        tepes = self.get_Cart(User=user)
+        serializer = UserSepetListSerializers(tepes, many = True)
+        return Response(serializer.data)
+
+
+    def post(self, request):
+        """
+        Eğer Ürün daha önce sepete eklenmişse ürün adedini gelen adet kadar artır.
+        Eğer Ürürn daha önce sepete eklenmemişse de ürünü sepete ekle.
+        {   
+            "Urun": UrunID,
+            "UrunADET": Urun adedi,
+            "Token": "UserAccessTOKEN" 
+        }
+        """
+        try:
+            token = request.data["Token"]
+            del request.data["Token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        user = self.get_User(UserAccessToken=token)
+        if 0 < request.data["UrunADET"] and user:
+            request.data["User"] = user.UserID
+            # product = get_object_or_404(Sepet, Urun = Urun(UrunID = request.data["Urun"]), User = user)
+            product = Sepet.objects.filter(Urun = Urun(UrunID = request.data["Urun"]), User = user).first()
+            if product:
+                request.data["UrunADET"] = request.data["UrunADET"] + product.UrunADET
+                serializer = UserSepetAddProductsSerializers(product, data=request.data)
+            else:
+                serializer = UserSepetAddProductsSerializers(data=request.data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status= status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+    def delete(self, request):
+        """
+        params da gelen ?p => ilgili ürünün sepete tutulduğu ID değeri ile
+        ilgili ürün sepeten silinir
+        {   
+            "Token": "UserAccessTOKEN" 
+        }
+        """
+
+        pid = request.query_params.get('p')
+        try:
+            token = request.data["Token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        user = self.get_User(UserAccessToken=token)
+        if pid and user:
+            product = self.get_product_Sepet(id = pid, user=user)
+            product.delete()
+            return Response(status= status.HTTP_204_NO_CONTENT)
+        return Response(status= status.HTTP_400_BAD_REQUEST)

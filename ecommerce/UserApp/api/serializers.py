@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from UserApp.models import User, UrunList, UyeList
+from UserApp.models import User, UrunList, UyeList, Sepet
 from ProductApp.api.serializers import UrunSerializers
 
 class UserSerializers(serializers.ModelSerializer):
@@ -36,4 +36,18 @@ class UrunCreatSerializers(serializers.ModelSerializer):
 class UserProductListSerializers(serializers.ModelSerializer):
     class Meta:
         model = UyeList
+        fields = '__all__'
+
+
+class UserSepetListSerializers(serializers.ModelSerializer):
+    Urun = UrunSerializers(read_only = True)
+    class Meta:
+        model = Sepet
+        fields = '__all__'
+        read_only_fields = ["User"]
+
+
+class UserSepetAddProductsSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Sepet
         fields = '__all__'
