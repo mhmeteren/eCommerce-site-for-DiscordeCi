@@ -35,18 +35,11 @@ class User(models.Model):
             uyeList.save()
         except:
             pass
-    
-    # """ilgili ürünü web sayfasında görme"""
-    # def get_absolute_url(self):
-    #     return '/learning/product/detail/%i/' % self.id
-
-    # @property
-    # def summary(self):
-    #     return self.content[:50]    
 
 
 
 class SiparisStatus(models.TextChoices):
+    status0 = 'IPTAL EDILDI', 'iptal edildi'
     status1 = 'HAZIRLANMA ASAMASINDA', 'Hazırlanma aşamasında'
     status2 = 'KARGOYA VERILDI', 'Kargoya verildi'
     status3 = 'TESLIM EDILDI', 'Teslim edildi'
@@ -60,6 +53,12 @@ class Siparis(models.Model):
     Urun = models.ForeignKey(Urun, on_delete=models.PROTECT, name="Urun")
 
     SiparisADRES = models.CharField(max_length=300)
+
+    SiparisADRESBASLIK = models.CharField(max_length=50)
+    SiparisADRESALICI = models.CharField(max_length=50)
+    SiparisADRESALICIGSM = models.CharField(max_length=11)
+    SiparisADRESALICITC = models.CharField(max_length=11)
+
     SiparisADET = models.IntegerField()
     SiparisFIYAT = models.DecimalField(max_digits=15, decimal_places=2)
     SiparisDURUM = models.CharField(max_length=50, choices=SiparisStatus.choices)
@@ -143,4 +142,4 @@ class Sepet(models.Model):
     def __str__(self):
         return f'Urun: {self.Urun.UrunID}'
 
-
+    

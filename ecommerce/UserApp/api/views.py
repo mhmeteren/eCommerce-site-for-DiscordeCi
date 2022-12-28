@@ -1,7 +1,8 @@
+from decimal import Decimal
 from rest_framework import status
 from rest_framework.response import Response
 
-from UserApp.models import User, UrunList, UyeList, Urun
+from UserApp.models import User, UrunList, UyeList, Urun, SiparisStatus, Siparis
 from UserApp.api.serializers import *
 
 
@@ -257,3 +258,149 @@ class UserSepetListAddDeleteAPIView(APIView):
             product.delete()
             return Response(status= status.HTTP_204_NO_CONTENT)
         return Response(status= status.HTTP_400_BAD_REQUEST)
+
+
+
+class UserSiparisListAddDeleteAPIView(APIView):
+    """
+    Kullanıcının Sepete eklediği ürünlerin satın alınması, daha önce satın aldığı
+    ürünlerin listelenmesi(sipariş geçmişi) ve sipariş iptal gibi işlemlerin gerçekleştiği APIView class ı
+    """
+    
+    def get_User(self, UserAccessToken: str):
+        user = get_object_or_404(User, TOKEN = UserAccessToken)
+        return user
+
+
+    def get_Siparis(self, SiparisID: int):
+        siparis = get_object_or_404(Siparis, SiparisID= SiparisID)
+        return siparis
+
+
+    def get_Sepet_List(self, user: User):
+        sepetList = Sepet.objects.filter(User=user)
+        return sepetList
+
+
+    def SepetListToSiparisDict(self, sepetList: list(), **kwargs):
+        """
+        Sepeteki değerleri Siparis serializerına göre ayarlama
+        Sepetlist içindeki tüm ürünlerin maliyetini hesaplama
+        """
+        productsDict = dict()
+        productsDict["productList"] = []
+        SepetToplam = Decimal()
+        for product in sepetList:
+            SepetToplam = SepetToplam + (product.UrunADET * product.Urun.UrunFIYAT)
+            productsDict["productList"].append({
+                "User": product.User.UserID,
+                "Urun": product.Urun.UrunID,
+                **kwargs,
+                "SiparisADET": product.UrunADET,
+                "SiparisFIYAT": product.Urun.UrunFIYAT,
+                "SiparisDURUM": SiparisStatus.status1
+            })
+        
+        productsDict["SepetToplam"] = SepetToplam
+        return productsDict
+
+
+    def SepetCleaning(self, user:User):
+        try:
+            Sepet.objects.filter(User=user).delete()
+            return True
+        except:
+            return False
+
+
+    def get(self, request):
+        """
+        Kullanıcı siparis geçmişi, en son yapılan alışverişten ilk yapılana doğru sıralanır.
+        """
+        try:
+            token = request.data["Token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        user = self.get_User(UserAccessToken=token)
+        siparis = Siparis.objects.filter(User = user).order_by("-SiparisTARIH")
+        serializer = UserSiparisSerializers(siparis, many=True)
+        return Response(serializer.data)
+    
+    
+    def post(self, request):
+        """
+        Siparislerin kullanıcının ürün sepetinden sipariş tablosuna eklenemsi ve satın alma işleminin tamamlanması.
+        """
+        try:
+            token = request.data["Token"]
+            userWALLET = Decimal(request.data["userWALLET"])
+            address = dict(
+            SiparisADRES = request.data["ADRES"][:300],
+            SiparisADRESBASLIK = request.data["ADRESBASLIK"][:50],
+            SiparisADRESALICI = request.data["ADRESALICI"][:50],
+            SiparisADRESALICIGSM = request.data["ADRESALICIGSM"][:11],
+            SiparisADRESALICITC = request.data["ADRESALICITC"][:11]
+            )
+            user = self.get_User(UserAccessToken=token)
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        sepetList = self.get_Sepet_List(user=user)
+        siparisDict = self.SepetListToSiparisDict(sepetList=sepetList, **address)
+        SepetToplam = siparisDict["SepetToplam"]
+        siparisList = siparisDict["productList"]
+
+        if siparisList == []:
+            return Response({
+                "islem":{
+                    "message": "sepete herhangi bir ürün bulunamadı!"
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if SepetToplam <= userWALLET:
+            for product in siparisList:
+                serializer = UserSiparisSerializers(data=product)
+                if serializer.is_valid():
+                    serializer.save()
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({
+                "islem":{
+                    "message": "Satın alma işlemi başarılı"
+                }
+            }, status= status.HTTP_201_CREATED) if self.SepetCleaning(user=user) else Response({
+                "islem":{
+                    "message": "Satın alma işlemi başarılı ama sepete birşeyler ters gitti!"
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response({
+                "islem":{
+                    "message": "Sanal cüzdanda yeterli miktarda bakiye yok!"
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def put(self, request):
+        """
+        Kullanıcı siparis güncelleme veya direkt siparis iptal
+        """
+        try:
+            token = request.data["Token"]
+            del request.data["Token"]
+            sid = request.data["SiparisID"]
+            del request.data["SiparisID"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        user = self.get_User(UserAccessToken=token)
+
+        siparis = self.get_Siparis(SiparisID=sid)
+        request.data["SiparisDURUM"]= SiparisStatus.status0 # Sipariş iptal
+        serializer = UserSiparisSerializers(siparis, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

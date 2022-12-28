@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from UserApp.models import User, UrunList, UyeList, Sepet
+from UserApp.models import User, UrunList, UyeList, Sepet, Siparis
 from ProductApp.api.serializers import UrunSerializers
 
 class UserSerializers(serializers.ModelSerializer):
@@ -50,4 +50,10 @@ class UserSepetListSerializers(serializers.ModelSerializer):
 class UserSepetAddProductsSerializers(serializers.ModelSerializer):
     class Meta:
         model = Sepet
+        fields = '__all__'
+
+
+class UserSiparisSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Siparis
         fields = '__all__'
