@@ -5,8 +5,8 @@ from rest_framework.generics import get_object_or_404
 
 from django.db.models import Q
 
-from ProductApp.models import Urun, UrunOzellik
-from ProductApp.api.serializers import UrunSerializers
+from ProductApp.models import Urun, UrunOzellik, OnerilenUrunler
+from ProductApp.api.serializers import UrunSerializers, OnerilenUrunlerSerializers
 from ProductApp.api.pagination import LargePagination
 
 from ..APIscripts.user_scripts import User_TOKEN_Control
@@ -16,6 +16,7 @@ class ProductsListAPIView(APIView):
     def get_products(self, id):
         products = get_object_or_404(Urun, UrunID = id)
         return products
+
 
     def get(self, request, id):
         """
@@ -173,3 +174,92 @@ class ProductsFilterListAPIView(APIView):
             serializer = self.serializer_class(products, many=True)
             return Response(serializer.data)
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class OnerilenUrunlerListAPIView(APIView):
+    """
+    Kullanıcılara Discord tarafında Notification Bot ile önerilen ürünleri listelemek için.
+    """
+    serializer_class = OnerilenUrunlerSerializers
+    pagination_class = LargePagination
+
+
+    @property
+    def paginator(self):
+        """The paginator instance associated with the view, or `None`."""
+        if not hasattr(self, '_paginator'):
+            if self.pagination_class is None:
+                self._paginator = None
+            else:
+                self._paginator = self.pagination_class()
+        return self._paginator
+
+
+    def paginate_queryset(self, queryset):
+        """Return a single page of results, or `None` if pagination is disabled."""
+        if self.paginator is None:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+
+    def get_paginated_response(self, data):
+        """Return a paginated style `Response` object for the given output data."""
+        assert self.paginator is not None
+        return self.paginator.get_paginated_response(data)
+
+
+    def ListProduct(self):
+        products = OnerilenUrunler.objects.filter(UrunDURUM=True).order_by('-UrunTARIH')
+        return products
+
+
+    def get_product(self, id):
+        product = get_object_or_404(OnerilenUrunler, OuID = id)
+        return product
+
+
+    def get(self, request):
+        """
+        Onerilen ürünleri pagination_class ın kısıtlamaları ile gönder.
+        """
+        product = self.ListProduct()
+        page = self.paginate_queryset(product)
+        if page is not None:
+            serializer = self.serializer_class(page, many=True)
+            return self.get_paginated_response(serializer.data) 
+        serializer = self.serializer_class(product, many=True)
+        return Response(serializer.data)
+
+
+    def put(self, request):
+        """
+        Önerilen ürünlerin hem güvenli bir şekilde Notification Bot una ulaşıp ulaşmadığını hemde
+        ulaşan urunlerin(yani kullanıcılara bildirim yoluyla sunulan) bir daha önerilmemesi için UrunDURUM güncellemesi.
+        "OnerilenUrunler":[
+            {
+                "OuID": OuID,
+                "UrunDURUM": false
+            },
+            .
+            .
+            .
+        ]
+        """
+        try:
+            productList = request.data["OnerilenUrunler"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        for p in productList:
+            product = self.get_product(id = p["OuID"])
+            serializer = OnerilenUrunlerSerializers(product, data=p)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            "status":{
+                "message": "Islem basarili."
+            }
+        })

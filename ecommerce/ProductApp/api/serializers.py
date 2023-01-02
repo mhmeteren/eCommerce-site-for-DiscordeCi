@@ -1,14 +1,7 @@
 from rest_framework import serializers
 
-from ProductApp.models import Urun, Firma, Kategori, AltKategori, Marka, UrunImg, UrunOzellik
+from ProductApp.models import Urun, Firma, AltKategori, Marka, UrunImg, UrunOzellik, OnerilenUrunler
 
-
-
-
-# class KategoriSerializers(serializers.ModelSerializer):
-#     class Meta:
-#         model = Kategori
-#         fields = ['KategoriID', 'KategoriADI']
 
 class MarkaSerializers(serializers.ModelSerializer):
     class Meta:
@@ -60,3 +53,10 @@ class UrunSerializers(serializers.ModelSerializer):
         model = Urun
         fields = '__all__'
 
+
+
+class OnerilenUrunlerSerializers(serializers.ModelSerializer):
+    OnerilenUrun = UrunSerializers(read_only=True)
+    class Meta:
+        model = OnerilenUrunler
+        fields = '__all__'

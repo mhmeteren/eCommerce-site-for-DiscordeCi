@@ -9,4 +9,4 @@ admin.site.register(AltKategori)
 admin.site.register(Urun)
 admin.site.register(UrunImg)
 admin.site.register(UrunOzellik)
-# Register your models here.
+admin.site.register(OnerilenUrunler)

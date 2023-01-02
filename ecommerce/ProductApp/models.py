@@ -50,6 +50,7 @@ class Kategori(models.Model):
     def __str__(self):
         return self.KategoriADI
 
+
 class AltKategori(models.Model):
     
     AltKategoriID = models.AutoField(primary_key=True)
@@ -105,6 +106,7 @@ class Urun(models.Model):
     def get_absolute_url(self):
         return '/p/product-detail/%i/' % self.UrunID
 
+
 class UrunImg(models.Model):
 
     UrunImgID = models.AutoField(primary_key=True)
@@ -121,6 +123,7 @@ class UrunImg(models.Model):
     def get_absolute_url(self):
         return '/p/product-detail/%i/' % self.Urun.UrunID
 
+
 class UrunOzellik(models.Model):
     UrunOzID = models.AutoField(primary_key=True)
     Urun = models.ForeignKey(Urun, on_delete=models.CASCADE, name="Urun", related_name="ozellikler")
@@ -133,3 +136,18 @@ class UrunOzellik(models.Model):
     
     def __str__(self):
         return f'UrunID: {self.Urun.UrunID} - Type: {self.UrunOzType} - Value: {self.UrunOzValue}'
+
+
+class OnerilenUrunler(models.Model):
+
+    OuID = models.AutoField(primary_key=True)
+    OnerilenUrun = models.ForeignKey(Urun, on_delete=models.CASCADE, name="OnerilenUrun", related_name="OnerilenUrun")  
+    UrunDURUM = models.BooleanField(default=True)
+    UrunTARIH = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "OnerilenUrunler"
+        verbose_name= "OnerilenUrunler"
+    
+    def __str__(self):
+        return f'Urun ID: {self.OnerilenUrun.UrunID} - Urun DURUM: {self.UrunDURUM}'
