@@ -12,6 +12,9 @@ from rest_framework.generics import get_object_or_404
 from django.http import Http404
 
 class UserAccTokenAutAPIView(APIView):
+    """
+    Kullanıcı token doğrulama.
+    """
     def get_object(self, token):
         dc_instance = get_object_or_404(User, TOKEN=token)
         return dc_instance
@@ -47,8 +50,6 @@ class UserUyeListAPIView(APIView):
             return list_instance
         except:
             raise Http404
-
-
 
 
     def get_product(self, uyeList: UyeList, urunid: int):

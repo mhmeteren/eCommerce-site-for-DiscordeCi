@@ -48,6 +48,6 @@ def productDetail(request, urunid):
 
 
 def ConvertFiyat(fiyat):
-    locale.setlocale(locale.LC_ALL, 'de_DE')
+    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
     return locale.format_string('%.2f', fiyat, True)
 

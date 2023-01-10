@@ -3,8 +3,6 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import get_object_or_404
 
-from django.db.models import Q
-
 from ProductApp.models import Urun, UrunOzellik, OnerilenUrunler
 from ProductApp.api.serializers import UrunSerializers, OnerilenUrunlerSerializers
 from ProductApp.api.pagination import LargePagination
@@ -12,7 +10,9 @@ from ProductApp.api.pagination import LargePagination
 from ..APIscripts.user_scripts import User_TOKEN_Control
 
 class ProductsListAPIView(APIView):
-    
+    """
+    Ürünleri listeler halinden ziyade tek tek ID değerlerine göre bilgilerini ileten APIView
+    """
     def get_products(self, id):
         products = get_object_or_404(Urun, UrunID = id)
         return products

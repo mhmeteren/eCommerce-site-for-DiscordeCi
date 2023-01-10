@@ -149,3 +149,4 @@ cython_debug/
 *.vsix
 
 scripts/
+SaveProducts.sh

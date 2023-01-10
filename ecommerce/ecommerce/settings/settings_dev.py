@@ -9,3 +9,4 @@ DATABASES = {
         'PORT': '3306',
     }
 }
+# Docker icin 'HOST'  kısmını ayarla
